@@ -2,7 +2,7 @@
 # Start Date: 8-24-24
 # End Date: 8-24-24
 # Project: AI Transcriber Project
-# Version: 1.10
+# Version: 1.20
 
 <br>
 
@@ -23,12 +23,18 @@ Uploaded to Github <br>
 # V-1.10: (8-24-24)
 Video and Audio now sync <br>
 
+# V-1.20: (8-24-24)
+User can now select other languages to have subtitles in
+
+
 # Current Features as of V-1.10:
 - A user can enter in the URL of a Youtube video that doesn't have subtitles, and generate subtitles for it using AI!
 - The user is met with a simple GUI to allow them to paste in the video's URL
 - The user's video and audio streams are snyced together
+- The user can choose to have subtitles in another language
 
 # Future Features to Implement:
 - Convert the local application into a working web application
 - Improve the UI
 - Sync the sound to the video (Completed)
+- Multiple subtitles in different languages
