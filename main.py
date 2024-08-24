@@ -2,7 +2,7 @@
 # Start Date: 8-24-24
 # End Date: 8-24-24
 # Project: AI Transcriber Project
-# Version: 1.00
+# Version: 1.10
 
 # Description: 
 """
@@ -33,6 +33,7 @@ def extract_audio(input_file):
     try:
         #This extracts the audio and saves it to the specified file
         ffm.input(input_file).output(extracted_audio).run(overwrite_output=True)
+        print(f"Audio extracted successfully: {extracted_audio}")
     except ffm.Error as e:
         error_message = e.stderr.decode() if e.stderr else str(e)
         print(f"FFmpeg error: {error_message}")
@@ -150,17 +151,18 @@ def generate_subtitle_file(input_file, language, segments):
 
 def add_subtitle_to_video(input_file, subtitle_file, subtitle_language):
     
-    #Set the output video file name to be "output-input_file-subtitle_language.mp4
+    #Sets the output video file name
     output_video = f"output-{input_file}-{subtitle_language}.mp4"
     
     try:
-        #Tries to apply the subtitle filter to the video
-        ffm.input(input_file).output(output_video, vf=f"subtitles={subtitle_file}").run(overwrite_output=True)
+        #Tries to apply the subtitle filter and make sure the audio is also copied
+        ffm.input(input_file).output(output_video, vf=f"subtitles={subtitle_file}", acodec='aac', vcodec='libx264').run(overwrite_output=True)
         
     except ffm.Error as e:
         error_message = e.stderr.decode() if e.stderr else str(e)
         print(f"FFmpeg error: {error_message}")
         raise e
+
 
 
 #This function retrieves the YouTube video URL from the user input
