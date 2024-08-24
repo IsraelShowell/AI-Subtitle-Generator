@@ -24,7 +24,7 @@ Uploaded to Github <br>
 Video and Audio now sync <br>
 
 # V-1.20: (8-24-24)
-User can now select other languages to have subtitles in
+User can now select other languages to have the subtitles in
 
 
 # Current Features as of V-1.10:
@@ -37,4 +37,4 @@ User can now select other languages to have subtitles in
 - Convert the local application into a working web application
 - Improve the UI
 - Sync the sound to the video (Completed)
-- Multiple subtitles in different languages
+- Multiple subtitles in different languages embeded in the same video
