@@ -1,4 +1,4 @@
-# Creator: Israel Showell
+# Contributors: Israel Showell, Khaled Khan, JessiP, Brandon Prophete, Ritesh Honnalli
 # Start Date: 8-24-24
 # End Date: 8-24-24
 # Project: AI Transcriber Project
@@ -12,6 +12,8 @@ This script uses Python libraries such as PytubeFix, Tkinter, FFMpeg, os, and ma
 manage the AI transcriptions!
 
 Clone this repository and run requriements.txt in a virtual environment to test the project out!
+See the test video I used here: https://www.youtube.com/watch?v=0CmtDk-joT4
+
 
 # Version History:
 # V-1.00: (8-24-24)
