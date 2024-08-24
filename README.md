@@ -20,7 +20,6 @@ See the test video I used here: https://www.youtube.com/watch?v=0CmtDk-joT4
 Initial Version <br>
 Uploaded to Github <br>
 
-# Version History:
 # V-1.10: (8-24-24)
 Video and Audio now sync <br>
 
