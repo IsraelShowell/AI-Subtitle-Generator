@@ -18,6 +18,7 @@ import ffmpeg as ffm #ffmpeg wrapper for Python
 import os #For file operations
 import pytubefix as pytube #For downloading the YouTube videos
 from faster_whisper import WhisperModel #For transcribing the audio
+from googletrans import Translator, LANGUAGES
 import math #For rounding numbers
 
 #def retrieveURL():
@@ -98,82 +99,176 @@ def convert_to_SRT(seconds):
     return f"{hours:02}:{minutes:02}:{seconds:02},000"
        
 #This function generates the subtitle file in SRT format
-def generate_subtitle_file(input_file, language, segments):
-    # The function takes three parameters:
+def generate_subtitle_file(input_file, segments, language=None, translate_to_language=None):
+    # The function takes 4 parameters:
     # 'input_file' - the name/path of the input media file
     # 'language' - the language code for the subtitles (e.g., 'en' for English)
     # 'segments' - a list of segment objects containing start time, end time, and text for each subtitle
-    
-    #Creates the subtitle file name by formatting it as 'sub-input_file.language.srt'
-    subtitle_file = f"sub-{input_file}.{language}.srt"
+    # 'translate_to_language' - the language code to translate the subtitles to (optional)
 
-    #Initializes an empty string 'text' that will hold all subtitle entries
-    text = ""
-
-    # Iterates over each segment in the 'segments' list with an index
-    # 'index' will start from 0, each 'segment' contains start time, end time, and text
-    for index, segment in enumerate(segments):
-
-        #Formats the start time of the segment using the 'format_time_for_srt' function
-        #Converts the start time into 'HH:MM:SS,mmm' needed for SRT files
-        segment_start = convert_to_SRT(segment.start)
+    #Ensures that an extra subtitle file won't be created if language is not specified
+    if(language != None):
         
-        #Formats the end time of the segment similarly
-        segment_end = convert_to_SRT(segment.end)
+            
+        #Creates the subtitle file name by formatting it as 'sub-input_file.language.srt'
+        subtitle_file = f"sub-{input_file}.{language}.srt"
+
+        #Initializes an empty string 'text' that will hold all subtitle entries
+        text = ""
+        
+        #Iterates over each segment in the 'segments' list with an index
+        #'index' will start from 0, each 'segment' contains start time, end time, and text
+        for index, segment in enumerate(segments):
+
+            #Formats the start time of the segment using the 'format_time_for_srt' function
+            #Converts the start time into 'HH:MM:SS,mmm' needed for SRT files
+            segment_start = convert_to_SRT(segment.start)
+        
+            #Formats the end time of the segment similarly
+            segment_end = convert_to_SRT(segment.end)
       
-        #Adds the subtitle sequence number to 'text' (SRT numbering starts from 1)
-        text += f"{str(index + 1)}\n"
+            #Adds the subtitle sequence number to 'text' (SRT numbering starts from 1)
+            text += f"{str(index + 1)}\n"
         
-        #Adds the timecode line indicating start and end times separated by '-->'
-        text += f"{segment_start} --> {segment_end}\n"
+            #Adds the timecode line indicating start and end times separated by '-->'
+            text += f"{segment_start} --> {segment_end}\n"
         
-        #Adds the subtitle text/content
-        #The two newline characters separate the next subtitle entry
-        text += f"{segment.text}\n\n"
+            #Adds the subtitle text/content
+            #The two newline characters separate the next subtitle entry
+            text += f"{segment.text}\n\n"
                 
-        #Debugging statements
-        print(f"Segment {index + 1}:")
-        print(f"Start: {segment_start}, End: {segment_end}, Text: {segment.text}")
+            #Debugging statements
+            print(f"Segment {index + 1}:")
+            print(f"Start: {segment_start}, End: {segment_end}, Text: {segment.text}")
         
-    # Opens a new file with the name 'subtitle_file' in write mode ('w')
-    f = open(subtitle_file, "w")
+        # Opens a new file with the name 'subtitle_file' in write mode ('w')
+        f = open(subtitle_file, "w", encoding='utf-8')
 
-    #Writes the accumulated subtitle text to the file
-    f.write(text)
+        #Writes the accumulated subtitle text to the file
+        f.write(text)
 
-    #Closes the file to ensure all data is properly saved
-    f.close()
+        #Closes the file to ensure all data is properly saved
+        f.close()
+        
+        #Returns the name/path of the generated subtitle file
+        return subtitle_file
     
-    #Returns the name/path of the generated subtitle file
-    return subtitle_file
+    #Used for the optional translation
+    if translate_to_language and translate_to_language != None and translate_to_language in LANGUAGES:
+        
+        #This opens a new file with the name 'translated_subtitle_file'
+        translated_subtitle_file = f"sub-{input_file}.{translate_to_language}.srt"
+        
+        translated_text = ""
+        
+        #Iterates over each segment in the 'segments' list with an index
+        #'index' will start from 0, each 'segment' contains start time, end time, and text
+        for index, segment in enumerate(segments):
+            
+            #Formats the start time of the segment using the 'format_time_for_srt' function
+            #Converts the start time into 'HH:MM:SS,mmm' needed for SRT files
+            segment_start = convert_to_SRT(segment.start)
+            
+            #Formats the end time of the segment similarly
+            segment_end = convert_to_SRT(segment.end)
+            
+            translated_segment = translate_text(segment.text, translate_to_language)
+            
+            #Adds the subtitle sequence number to 'text' (SRT numbering starts from 1)
+            translated_text += f"{str(index + 1)}\n"
+            
+            #Adds the timecode line indicating start and end times separated by '-->'
+            translated_text += f"{segment_start} --> {segment_end}\n"
+            
+            #Adds the subtitle text/content
+            #The two newline characters separate the next subtitle entry
+            translated_text += f"{translated_segment}\n\n"
+        
+        #This opens the file in write mode ('w')
+        with open(translated_subtitle_file, "w", encoding='utf-8') as f:
+            f.write(translated_text)
+            
+        #Returns the name/path of the generated subtitle file
+        return translated_subtitle_file
+    
 
 #This function adds the generated subtitle file to the video file using ffmpeg
 
-def add_subtitle_to_video(input_file, subtitle_file, subtitle_language):
-    
-    #Sets the output video file name
-    output_video = f"output-{input_file}-{subtitle_language}.mp4"
-    
+def add_subtitle_to_video(input_file, subtitle_files):
+    # This sets the output video file name
+    output_video = f"output-{input_file}.mp4"
+
+    print("Made it to add_subtitle_to_video function successfully!")
+
+    # Create the FFmpeg command
+    cmd = ['ffmpeg', '-i', input_file]  # Start with the input file
+
+    # Add each subtitle file as an input
+    for subtitle_file in subtitle_files:
+        cmd.extend(['-i', subtitle_file])
+
+    # Create map arguments for each subtitle file
+    for i in range(len(subtitle_files)):
+        cmd.extend(['-map', f'0:v'])
+        cmd.extend(['-map', f'0:a'])
+        cmd.extend(['-map', str(i + 1)])
+
+    # Set codec for subtitles and video/audio streams
+    cmd.extend([
+        '-c:v', 'copy',  # Copy the video stream
+        '-c:a', 'copy',  # Copy the audio stream
+        '-c:s', 'mov_text',  # Set the subtitle codec to mov_text
+        '-metadata:s:s:0', 'language=eng',  # Set language metadata for the first subtitle
+        output_video  # Specify the output file name
+    ])
+
     try:
-        #Tries to apply the subtitle filter and make sure the audio is also copied
-        ffm.input(input_file).output(output_video, vf=f"subtitles={subtitle_file}", acodec='aac', vcodec='libx264').run(overwrite_output=True)
+        # Run the ffmpeg command
+        result = ffm.run(cmd)
+        print(f"Video with subtitles created successfully: {output_video}")
         
     except ffm.Error as e:
-        error_message = e.stderr.decode() if e.stderr else str(e)
-        print(f"FFmpeg error: {error_message}")
-        raise e
+        messagebox.showwarning("FFmpeg Error!", f"An error occurred with FFmpeg: {e}")
+        print(f"FFmpeg Error: {e}")
+    
+    except Exception as e:
+        messagebox.showwarning("An error occurred!", f"{e}")
+        print(f"An error occurred: {e}")
+    
+    finally:
+        messagebox.showinfo("Thank You!", "Thanks for using AI Transcriber! ")
 
+
+
+
+#This function translates the text of the subtitles using Google Translate into the desired language
+def translate_text(text, dest_language):
+    translator = Translator()
+    translation = translator.translate(text, dest=dest_language)
+    return translation.text
 
 
 #This function retrieves the YouTube video URL from the user input
 def getURL():
     
+    #Initializes subtitle_file to None in order to avoid a cannot access local variable error
+    subtitle_file = None
+    
     #Gets the user's text stored in the text area
     url = URL_entry.get() 
+    
+    #Gets the user's desired language for translation from the dropdown menu
+    target_language = selected_language.get()
+    
     
     #This protects against an empty URL string
     if not url:
         messagebox.showwarning("Input Error", "Please enter a valid YouTube URL.")
+        return
+    
+    #Makes sure that the requested language is available
+    if target_language not in LANGUAGE_CHOICES.values():
+        messagebox.showwarning("Language Error", "Invalid target language code.")
         return
     
     #Debugging statement
@@ -186,58 +281,78 @@ def getURL():
         #Downloads the highest resolution mp4 video after ordering by resolution
         stream = yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
         
-        #If the video stream is found, download it to the user's directory
+        #Checks if the stream was successfully setup
         if stream:
- 
+            
             #Defines the working directory
             working_directory = os.getcwd()
             
             #Downloads the video to the working directory
             stream.download(output_path=working_directory)
             
-            #This gets the file name
-            video_file = stream.default_filename
+            #This should be a string representing the filename
+            video_file = stream.default_filename  
+        else:
+            raise ValueError("No suitable video stream found.")
+
+        #If the video stream is found, download it to the user's directory
+        if stream:
             
             #This removes the mp4 video extension for easier manipulation
-            video_title = video_file#.replace(".mp4", "")
-            #os.rename(os.path.join(working_directory, video_file), os.path.join(working_directory, f"{video_title}.mp4"))
+            video_title = video_file
             
             #Debugging statement
             print("Video downloaded successfully!")
 
             #The below statements handle the process the video for transcription
             print(video_title)
+            
             #Saves the result of the function into this variable
             audio_extract = extract_audio(video_title)
-            print("Audio extracted successfully!")
             
             #Saves the language and segments into these variables
             language, segments = transcribe_audio(audio_extract)
             print("Language and segments retrived successfully!")
             
             #Subtitle file is generated by this function call
-            subtitle_file = generate_subtitle_file(video_title, language, segments)
-            print("Subtitle file made successfully!")
+            #This generates subtitle files for default and additional languages
+            subtitle_files = []
             
-            #Adds the generated subtitle file to the video using this function call
-            add_subtitle_to_video(video_title, subtitle_file, language)
-            print("Subtitles added successfully!")
+            #This will generate the default language subtitles
+            subtitle_file = generate_subtitle_file(video_file, segments, language, None)
+            subtitle_files.append(subtitle_file)
             
+            print("Main Subtitle file made successfully!")
+            
+            #This adds subtitle files for additional languages (e.g., French, Spanish)
+            #Adding more languages here will add subtitle files for those languages
+            target_languages = []
+            target_languages.append(target_language)
+            
+            #This will add subtitles for the additional language(s)
+            for lang in target_languages:
+                subtitle_file = generate_subtitle_file(video_file, segments, None, lang)
+                subtitle_files.append(subtitle_file)
+                print(lang + "Subtitles added successfully!")
+
+            #This adds all of the subtitles to the video
+            add_subtitle_to_video(video_file, subtitle_files)
+
             #Notifies the user that the transcription and subtitle process completed successfully
-            messagebox.showinfo("Success", "Transcription and subtitle process completed successfully!")
+            messagebox.showinfo("Success!", "Transcription and subtitle process completed successfully!")
         else:
-            messagebox.showwarning("Download Error", "No video stream found for download.")
+            messagebox.showwarning("Download Error!", "No video stream found for download.")
         
     except pytube.exceptions.PytubeFixError as e:
-        messagebox.showwarning("Pytube Error", f"An error occurred with Pytube: {e}")
+        messagebox.showwarning("Pytube Error!", f"An error occurred with Pytube: {e}")
         print(f"Pytube Error: {e}")
     
     except Exception as e:
-        messagebox.showwarning("An error occurred", f"{e}")
+        messagebox.showwarning("An error occurred!", f"{e}")
         print(f"An error occurred: {e}")
     
     finally:
-        messagebox.showinfo("Thank You", "Thanks for using AI Transcriber! ")
+        messagebox.showinfo("Thank You!", "Thanks for using AI Transcriber! ")
 
 
 # Creates the main window
@@ -245,11 +360,33 @@ root = tk.Tk()
 root.title("AI Transcriber")  #Sets the window title
 root.geometry("500x500")  #Sets the window size to 500x500 pixels
 
+#Language code used in translation from Google
+LANGUAGE_CHOICES = {
+    'Spanish': 'es',
+    'French': 'fr',
+    'German': 'de',
+    'Chinese': 'zh-cn',
+    'Japanese': 'ja'
+}
+
 # Creates input fields and labels
 URL_label = tk.Label(root, text="Enter your Youtube Video's URL:")  # Creates the label
 URL_label.pack(pady=10)  #Packs the label into the window with padding
 URL_entry = tk.Entry(root)  #Creates an input field to enter the URL
 URL_entry.pack(pady=10)  #Packs the input field into the window with padding
+
+# Create input fields and labels for language translation
+language_label = tk.Label(root, text="Select target language:")
+language_label.pack(pady=10)
+
+# Create a variable to store the selected language
+selected_language = tk.StringVar(root)
+selected_language.set(next(iter(LANGUAGE_CHOICES.values())))  # Set default value to the first language
+
+# Create the dropdown menu for language selection
+language_menu = tk.OptionMenu(root, selected_language, *LANGUAGE_CHOICES.values())
+language_menu.pack(pady=10)
+
 
 # Creates a button that calls the function
 run_button = tk.Button(root, text="Transcribe Video!", command=getURL)

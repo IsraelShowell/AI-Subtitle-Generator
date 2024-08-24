@@ -11,7 +11,7 @@ This project is a GUI AI transcriber that allows a user to transcribe Youtube vi
 This script uses Python libraries such as PytubeFix, Tkinter, FFMpeg, os, and math to handle logic, and faster_whisper is used to 
 manage the AI transcriptions!
 
-Clone this repository and run requriements.txt in a virtual environment to test the project out!
+Clone this repository and run requriements.txt in a virtual environment to test the project out! <br>
 See the test video I used here: https://www.youtube.com/watch?v=0CmtDk-joT4
 
 
