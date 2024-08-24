@@ -1,4 +1,4 @@
-# Creator: Israel Showell
+# Script Creator: Israel Showell
 # Start Date: 8-24-24
 # End Date: 8-24-24
 # Project: AI Transcriber Project
